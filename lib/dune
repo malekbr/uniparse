@@ -1,0 +1,13 @@
+(library
+ (public_name uniparse)
+ (name uniparse)
+ (libraries core uucp angstrom)
+ (inline_tests)
+ (preprocess
+  (pps ppx_jane)))
+
+(cinaps
+ (files uniparse.ml)
+ (libraries core cinaps.runtime)
+ (preprocess
+  (pps ppx_jane)))
