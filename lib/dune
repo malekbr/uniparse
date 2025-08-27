@@ -1,7 +1,7 @@
 (library
  (public_name uniparse)
  (name uniparse)
- (libraries core uucp angstrom)
+ (libraries core uucp)
  (inline_tests)
  (preprocess
   (pps ppx_jane)))

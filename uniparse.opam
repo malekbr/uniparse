@@ -6,12 +6,14 @@ maintainer: ["Maintainer Name <maintainer@example.com>"]
 authors: ["Author Name <author@example.com>"]
 license: "LICENSE"
 tags: ["add topics" "to describe" "your" "project"]
-homepage: "https://github.com/username/reponame"
+homepage: "https://github.com/malekbr/uniparse"
 doc: "https://url/to/documentation"
-bug-reports: "https://github.com/username/reponame/issues"
+bug-reports: "https://github.com/malekbr/uniparse/issues"
 depends: [
   "dune" {>= "3.19"}
   "ocaml"
+  "core"
+  "uucp"
   "odoc" {with-doc}
 ]
 build: [
@@ -28,5 +30,5 @@ build: [
     "@doc" {with-doc}
   ]
 ]
-dev-repo: "git+https://github.com/username/reponame.git"
+dev-repo: "git+https://github.com/malekbr/uniparse.git"
 x-maintenance-intent: ["(latest)"]
