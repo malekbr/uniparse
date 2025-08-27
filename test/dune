@@ -1,2 +1,6 @@
-(test
- (name test_uniparse))
+(library
+ (name test_uniparse)
+ (inline_tests)
+ (preprocess
+  (pps ppx_jane))
+ (libraries core uniparse angstrom))

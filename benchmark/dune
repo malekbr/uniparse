@@ -1,4 +1,4 @@
 (executables
  (names bench)
- (libraries uniparse core_bench core_bench.inline_benchmarks memtrace)
+ (libraries test_uniparse core_bench core_bench.inline_benchmarks memtrace)
  (link_flags -linkall))
