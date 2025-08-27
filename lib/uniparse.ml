@@ -1424,7 +1424,7 @@ let char ~(call_pos : [%call_pos]) c =
   }
 ;;
 
-let string ~(call_pos : [%call_pos]) s =
+let bytes ~(call_pos : [%call_pos]) s =
   { run =
       (fun base ~pos ~len ~unsafe_get_char ~unsafe_get_uchar:_ ~sub:_ ->
         let string_len = String.length s in
@@ -1441,6 +1441,36 @@ let string ~(call_pos : [%call_pos]) s =
           if equal 0
           then exclave_ Parsed { value = s; next_pos = pos + string_len }
           else exclave_ Failed { reason = "string"; call_pos }))
+  }
+;;
+
+let string_utf8 ~(call_pos : [%call_pos]) s =
+  { run =
+      (fun base
+        ~pos
+        ~len
+        ~unsafe_get_char:_
+        ~unsafe_get_uchar:(Get unsafe_get_uchar)
+        ~sub:_ ->
+        let next_pos = ref pos in
+        let equals =
+          String.Utf8.for_all s ~f:(fun c ->
+            if !next_pos >= len
+            then false
+            else (
+              let uchar_decode = unsafe_get_uchar base ~pos:!next_pos ~len in
+              match Uchar.Decode_result.uchar uchar_decode with
+              | None -> false
+              | Some uchar ->
+                if Uchar.equal uchar c
+                then (
+                  next_pos := !next_pos + Uchar.Decode_result.bytes_consumed uchar_decode;
+                  true)
+                else false))
+        in
+        if equals
+        then exclave_ Parsed { value = s; next_pos = !next_pos }
+        else exclave_ Failed { reason = "string"; call_pos })
   }
 ;;
 
