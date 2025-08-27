@@ -10,7 +10,7 @@ homepage: "https://github.com/malekbr/uniparse"
 doc: "https://url/to/documentation"
 bug-reports: "https://github.com/malekbr/uniparse/issues"
 depends: [
-  "dune" {>= "3.18"}
+  "dune" {>= "3.19"}
   "ocaml"
   "core"
   "uucp"
