@@ -1416,6 +1416,39 @@ let optional (type a : value_or_null) t ~(default : a) ~return =
   }
 ;;
 
+let rec reverse_local_list_of_globals_into_global_list (list @ local) ~acc =
+  match list with
+  | [] -> acc
+  | { global } :: rest ->
+    reverse_local_list_of_globals_into_global_list rest ~acc:(global :: acc)
+;;
+
+let rec many_loop
+  t
+  base
+  ~pos
+  ~len
+  ~unsafe_get_char
+  ~unsafe_get_uchar
+  ~(sub : 'target. ('base, 'target, _) sub)
+  ~(acc @ local)
+  =
+  match t.run base ~pos ~len ~unsafe_get_char ~unsafe_get_uchar ~sub with
+  | Parsed { value; next_pos } ->
+    exclave_
+    many_loop
+      t
+      base
+      ~pos:next_pos
+      ~len
+      ~unsafe_get_char
+      ~unsafe_get_uchar
+      ~sub
+      ~acc:({ global = value } :: acc)
+  | Failed _ ->
+    exclave_ ~pos, { global = reverse_local_list_of_globals_into_global_list acc ~acc:[] }
+;;
+
 let ( <* ) t1 t2 =
   { run =
       (fun base ~pos ~len ~unsafe_get_char ~unsafe_get_uchar ~sub ->
@@ -1442,6 +1475,43 @@ let ( *> ) t1 t2 =
            | Failed { reason; call_pos } -> exclave_ Failed { reason; call_pos })
         | Failed { reason; call_pos } -> exclave_ Failed { reason; call_pos })
   }
+;;
+
+let many t =
+  { run =
+      (fun base ~pos ~len ~unsafe_get_char ~unsafe_get_uchar ~sub ->
+        let ~pos, { global = value } =
+          many_loop t base ~pos ~len ~unsafe_get_char ~unsafe_get_uchar ~sub ~acc:[]
+        in
+        exclave_ Parsed { value; next_pos = pos })
+  }
+;;
+
+let many1 ~(call_pos : [%call_pos]) t = nonempty ~call_pos (many t)
+
+let sep_by ~(call_pos : [%call_pos]) t ~sep =
+  { run =
+      (fun base ~pos ~len ~unsafe_get_char ~unsafe_get_uchar ~sub ->
+        match t.run base ~pos ~len ~unsafe_get_char ~unsafe_get_uchar ~sub with
+        | Parsed { value = hd; next_pos } ->
+          (match
+             (many (sep *> t)).run
+               base
+               ~pos:next_pos
+               ~len
+               ~unsafe_get_char
+               ~unsafe_get_uchar
+               ~sub
+           with
+           | Parsed { value = tl; next_pos } ->
+             exclave_ Parsed { value = hd :: tl; next_pos }
+           | Failed _ -> exclave_ Parsed { value = [ hd ]; next_pos })
+        | Failed _ -> exclave_ Parsed { value = []; next_pos = pos })
+  }
+;;
+
+let sep_by1 ~(call_pos : [%call_pos]) t ~sep =
+  nonempty ~call_pos (sep_by ~call_pos t ~sep)
 ;;
 
 let parse_generic
